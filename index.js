@@ -27,6 +27,7 @@ client.connect((err) => {
   const appointmentCollection = client
     .db("doctorsPortal")
     .collection("appointments");
+  const doctorCollection = client.db("doctorsPortal").collection("doctors");
 
   app.post("/addAppointment", (req, res) => {
     const appointment = req.body;
@@ -48,9 +49,37 @@ client.connect((err) => {
 
   app.post("/addDoctor", (req, res) => {
     const file = req.files.file;
-    const name = req.files.nameconst;
-    const email = req.files.email;
-    console.log(name, email, file);
+    const newImg = file.data;
+    const encImg = newImg.toString("base64");
+
+    const name = req.body.file[0];
+    const email = req.body.file[1];
+
+    var image = {
+      contentType: file.mimetype,
+      size: file.size,
+      img: Buffer.from(encImg, "base64"),
+    };
+    //upload to DB
+    doctorCollection.insertOne({ name, email, image }).then((result) => {
+      res.send(result.insertedCount > 0);
+    });
+
+    //save to our doctor folder
+    file.mv(`${__dirname}/doctors/${file.name}`, (err) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).send({ msg: "failed to upload img" });
+      } else {
+        return res.send({ name: file.name, path: `/${file.name}` });
+      }
+    });
+  });
+
+  app.get("/doctors", (req, res) => {
+    doctorCollection.find({}).toArray((err, documents) => {
+      res.send(documents);
+    });
   });
 });
 
