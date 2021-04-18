@@ -3,11 +3,14 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const MongoClient = require("mongodb").MongoClient;
 require("dotenv").config();
+const fileUpload = require("express-fileupload");
 
 const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
+app.use(express.static("doctors"));
+app.use(fileUpload());
 
 const port = 5000;
 
@@ -41,6 +44,13 @@ client.connect((err) => {
       .toArray((err, documents) => {
         res.send(documents);
       });
+  });
+
+  app.post("/addDoctor", (req, res) => {
+    const file = req.files.file;
+    const name = req.files.nameconst;
+    const email = req.files.email;
+    console.log(name, email, file);
   });
 });
 
